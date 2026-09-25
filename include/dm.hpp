@@ -17,6 +17,9 @@ std::string readString(uptr addr);
 void setTask(task_t t);
 task_t machTask();
 
+bool attach();
+uptr base();
+
 template <typename T>
 T read(uptr addr) {
     T v{};
@@ -35,9 +38,8 @@ namespace gov {
 
 using uptr = uintptr_t;
 
-bool attach();
-uptr base();
 uptr dm(uptr base);
+uptr playerCharacter(uptr dataModel);
 
 }
 
@@ -50,7 +52,6 @@ std::string className(uptr inst);
 std::vector<uptr> children(uptr inst);
 uptr findFirstChild(uptr inst, const std::string& wanted);
 uptr walk(uptr inst, const std::string& path);
-uptr playerCharacter(uptr dataModel);
 
 }
 

@@ -88,17 +88,4 @@ uptr walk(uptr inst, const std::string& path) {
     return cur;
 }
 
-uptr playerCharacter(uptr dataModel) {
-    if (!memory::valid(dataModel))
-        return 0;
-
-    uptr players = findFirstChild(dataModel, "Players"); // the first instance is always localplayer
-
-    uptr localPlayer = memory::read<uptr>(
-        players + Offsets::Player::LocalPlayer
-    );
-
-    return memory::read<uptr>(localPlayer + Offsets::Player::ModelInstance);
-}
-
 }

@@ -7,11 +7,11 @@ auto walkspeedValue = 167.6f; // example value
 
 int main() {
 
-    gov::attach();
+    memory::attach();
 
-    auto base = gov::base();
+    auto base = memory::base();
     auto dm = gov::dm(base);
-    auto character = instance::playerCharacter(dm);
+    auto character = gov::playerCharacter(dm);
     auto humanoid = instance::walk(character, "Humanoid");
 
     std::cout << std::hex;

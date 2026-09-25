@@ -1,10 +1,81 @@
 #include <iostream>
 #include <cstring>
 #include <libproc.h>
+#include <mach/mach_vm.h>
 #include <mach-o/dyld_images.h>
 #include "dm.hpp"
 
-namespace gov {
+namespace memory {
+
+static task_t task = MACH_PORT_NULL;
+
+void setTask(task_t t) {
+    task = t;
+}
+
+task_t machTask() {
+    return task;
+}
+
+bool valid(uptr addr) {
+    return addr > 0x400000 && addr < 0x7FFFFFFFFFFFFFFF &&
+           addr != 0xCCCCCCCCCCCCCCCC;
+}
+
+bool read(uptr addr, void* out, size_t size) {
+    if (!valid(addr) || task == MACH_PORT_NULL)
+        return false;
+
+    mach_vm_size_t got = 0;
+    kern_return_t kr = mach_vm_read_overwrite(
+        task,
+        addr,
+        size,
+        reinterpret_cast<mach_vm_address_t>(out),
+        &got
+    );
+
+    return kr == KERN_SUCCESS && got == size;
+}
+
+bool write(uptr addr, const void* in, size_t size) {
+    if (!valid(addr) || task == MACH_PORT_NULL)
+        return false;
+
+    kern_return_t kr = mach_vm_write(
+        task,
+        addr,
+        reinterpret_cast<vm_offset_t>(in),
+        static_cast<mach_msg_type_number_t>(size)
+    );
+
+    return kr == KERN_SUCCESS;
+}
+
+std::string readString(uptr addr) {
+    if (!valid(addr))
+        return {};
+
+    uint8_t flag = read<uint8_t>(addr + Offsets::Misc::StringFlag);
+    uptr data = addr;
+    int64_t len = flag;
+
+    if (flag & 0x80) {
+        data = read<uptr>(addr);
+        len = read<int64_t>(addr + Offsets::Misc::StringLength);
+    }
+
+    if (len <= 0 || len > 256)
+        return {};
+    if (data != addr && !valid(data))
+        return {};
+
+    std::string out(static_cast<size_t>(len), '\0');
+    if (!read(data, out.data(), static_cast<size_t>(len)))
+        return {};
+
+    return out;
+}
 
 // this looks for the first process titled "RobloxPlayer" so if you're trying to get every pid for roblox then u gotta add that yourself
 bool attach() {
@@ -32,13 +103,11 @@ bool attach() {
         return false;
     }
 
-    memory::setTask(t);
+    setTask(t);
     return true;
 }
 
-// image base addr
 uptr base() {
-    task_t task = memory::machTask();
     if (task == MACH_PORT_NULL)
         return 0;
 
@@ -64,19 +133,6 @@ uptr base() {
         return 0;
 
     return reinterpret_cast<uptr>(first.imageLoadAddress);
-}
-
-// datamodel
-uptr dm(uptr base) {
-    // fake dm to real dm method
-    // the other methods i've used in the past for macos was shit
-
-    auto fake = memory::read<uptr>(base + Offsets::FakeDataModel::Pointer);
-    if (!memory::valid(fake))
-        return 0;
-
-    auto dm = memory::read<uptr>(fake + Offsets::FakeDataModel::RealDataModel);
-    return memory::valid(dm) ? dm : 0;
 }
 
 }
