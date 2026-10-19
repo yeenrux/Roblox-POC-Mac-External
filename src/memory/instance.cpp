@@ -87,3 +87,5 @@ uptr walk(uptr inst, const std::string& path) {
 
     return cur;
 }
+
+}

@@ -17,3 +17,5 @@ bool walkspeed(uptr humanoid, float speed) {
     memory::write(humanoid + Offsets::Humanoid::Walkspeed, speed);
     return memory::write(humanoid + Offsets::Humanoid::WalkspeedCheck, speed);
 }
+
+}
