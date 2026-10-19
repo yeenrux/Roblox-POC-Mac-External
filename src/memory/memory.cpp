@@ -134,5 +134,3 @@ uptr base() {
 
     return reinterpret_cast<uptr>(first.imageLoadAddress);
 }
-
-}
