@@ -26,5 +26,3 @@ uptr playerCharacter(uptr dataModel) {
 
     return memory::read<uptr>(localPlayer + Offsets::Player::ModelInstance);
 }
-
-}
